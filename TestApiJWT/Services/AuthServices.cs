@@ -14,7 +14,7 @@ namespace TestApiJWT.Services
         private readonly UserManager<ApplicationUser> _user;
         private readonly JWT _jwt;
 
-        public AuthServices(UserManager<ApplicationUser> user, IOptions<JWT> jwt)
+         public AuthServices(UserManager<ApplicationUser> user, IOptions<JWT> jwt)
         {
             _user = user;
             _jwt = jwt.Value;
@@ -93,7 +93,7 @@ namespace TestApiJWT.Services
             var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Key));
             var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
 
-            var jwtSecurityToken = new JwtSecurityToken
+            var Token = new JwtSecurityToken
                 (
                 issuer: _jwt.Issuer,
                 audience: _jwt.Audience,
@@ -103,7 +103,7 @@ namespace TestApiJWT.Services
 
 
 
-                return jwtSecurityToken;
+                return Token;
         }
 
     }
