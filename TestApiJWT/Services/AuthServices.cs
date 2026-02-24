@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -18,6 +19,30 @@ namespace TestApiJWT.Services
         {
             _user = user;
             _jwt = jwt.Value;
+        }
+
+        public async Task<AuthModel> GetTokenAsync(LoginModel model)
+        {
+            var authmodel = new AuthModel();
+            var user=await _user.FindByEmailAsync(model.Email);
+            if (user == null|| !await _user.CheckPasswordAsync(user, model.Password)) 
+            {
+                
+
+                authmodel.Message = "Email or password is incorrect!";
+                return authmodel;
+            }
+
+            var jwtsecuritytoken = await CreateJwtTokenAsync(user);
+            authmodel.IsAuthenticated = true;
+            authmodel.Token = new JwtSecurityTokenHandler().WriteToken(jwtsecuritytoken);
+            authmodel.Email = user.Email;
+            authmodel.UserName = user.UserName;
+            authmodel.Expireon = jwtsecuritytoken.ValidTo;
+            var roleslist = await _user.GetRolesAsync(user);
+            authmodel.Roles = roleslist.ToList();
+
+            return authmodel;
         }
 
         public async Task<AuthModel> RegisterAsync(RegisterModel model)

@@ -27,12 +27,32 @@ namespace TestApiJWT.Controllers
             {
                 return BadRequest(result.Message);
             }
-            return Ok(result);
+            return Ok(new 
+            { 
+             result.Token,
+             result.Expireon
+            });
+
+
+            //return Ok(result);
+
         }
 
+        [HttpPost("login")]
+        public async Task<IActionResult> GetTokenAsync([FromBody] LoginModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var result=await _authServices.GetTokenAsync(model);
+            if (!result.IsAuthenticated)
+            {
+                return BadRequest($"{result.Message}");
 
-
-
+            }
+            return Ok(result);
+        }
 
     }
 }
