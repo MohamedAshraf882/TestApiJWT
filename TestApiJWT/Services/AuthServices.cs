@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -14,11 +15,13 @@ namespace TestApiJWT.Services
     {
         private readonly UserManager<ApplicationUser> _user;
         private readonly JWT _jwt;
+        private readonly RoleManager<IdentityRole>_roleManager;
 
-         public AuthServices(UserManager<ApplicationUser> user, IOptions<JWT> jwt)
+         public AuthServices(UserManager<ApplicationUser> user, IOptions<JWT> jwt, RoleManager<IdentityRole> roleManager)
         {
             _user = user;
             _jwt = jwt.Value;
+            _roleManager = roleManager;
         }
 
         public async Task<AuthModel> GetTokenAsync(LoginModel model)
@@ -34,8 +37,8 @@ namespace TestApiJWT.Services
             }
 
             var jwtsecuritytoken = await CreateJwtTokenAsync(user);
-            authmodel.IsAuthenticated = true;
             authmodel.Token = new JwtSecurityTokenHandler().WriteToken(jwtsecuritytoken);
+            authmodel.IsAuthenticated = true;
             authmodel.Email = user.Email;
             authmodel.UserName = user.UserName;
             authmodel.Expireon = jwtsecuritytoken.ValidTo;
@@ -92,6 +95,28 @@ namespace TestApiJWT.Services
                 Token = new JwtSecurityTokenHandler().WriteToken(jwtsecuritytoken),
                 UserName = user.UserName,
             };
+
+
+        }
+
+        public async Task<string> AddRoleAsync(AddRoleModel model) 
+        { 
+         var user=await _user.FindByIdAsync(model.UserId);
+            if (user == null)
+                return ("User not found!");
+
+             if(!await _roleManager.RoleExistsAsync(model.Role))
+                   return ("Role not found!");
+
+            if(await _user.IsInRoleAsync(user,model.Role))
+                return ("User already assigned to this role!");
+            var result=await _user.AddToRoleAsync(user, model.Role);
+            //if (result.Succeeded)
+            //    return string.Empty;
+
+            //return ("Failed to add role!");
+            return result.Succeeded ? string.Empty : "Failed to add role!";
+
 
 
         }
